@@ -1,0 +1,98 @@
+@page "/events"
+@rendermode InteractiveServer
+@using EventEase.Models
+@using EventEase.Services
+@inject EventService EventService
+
+<PageTitle>Browse Events - EventEase</PageTitle>
+
+<div class="events-container">
+    <div class="page-header">
+        <h1>Browse Events</h1>
+        <p class="lead">Discover and register for upcoming corporate and social events</p>
+    </div>
+
+    <div class="search-section">
+        <div class="search-box">
+            <input type="text" 
+                   class="form-control" 
+                   placeholder="Search events by name, location, or category..." 
+                   value="@searchTerm"
+                   @oninput="OnSearchInput" />
+            <span class="bi bi-search search-icon"></span>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="loading-container">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p>Loading events...</p>
+        </div>
+    }
+    else if (filteredEvents.Count == 0)
+    {
+        <div class="no-events">
+            <span class="bi bi-calendar-x"></span>
+            <h3>No events found</h3>
+            <p>Try adjusting your search criteria</p>
+        </div>
+    }
+    else
+    {
+        <div class="events-grid">
+            @foreach (var eventItem in filteredEvents)
+            {
+                <EventCard EventData="@eventItem" ShowActions="true" />
+            }
+        </div>
+
+        <div class="event-count">
+            <p>Showing @filteredEvents.Count of @allEvents.Count events</p>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Event> allEvents = new();
+    private List<Event> filteredEvents = new();
+    private string searchTerm = string.Empty;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEvents();
+    }
+
+    private async Task LoadEvents()
+    {
+        isLoading = true;
+        allEvents = await EventService.GetAllEventsAsync();
+        filteredEvents = allEvents.ToList();
+        isLoading = false;
+    }
+
+    private void OnSearchInput(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? string.Empty;
+        FilterEvents();
+    }
+
+    private void FilterEvents()
+    {
+        if (string.IsNullOrWhiteSpace(searchTerm))
+        {
+            filteredEvents = allEvents.ToList();
+        }
+        else
+        {
+            filteredEvents = allEvents
+                .Where(evt => evt.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                             evt.Location.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                             evt.Category.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+    }
+}

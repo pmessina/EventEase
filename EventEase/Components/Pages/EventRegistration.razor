@@ -1,0 +1,208 @@
+@page "/events/{id:int}/register"
+@rendermode InteractiveServer
+@using EventEase.Models
+@using EventEase.Services
+@inject EventService EventService
+@inject NavigationManager Navigation
+
+<PageTitle>Register - @(eventItem?.Name ?? "Event") - EventEase</PageTitle>
+
+<div class="registration-container">
+    @if (isLoading)
+    {
+        <div class="loading-container">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p>Loading registration form...</p>
+        </div>
+    }
+    else if (eventItem == null)
+    {
+        <div class="not-found">
+            <span class="bi bi-exclamation-triangle"></span>
+            <h2>Event Not Found</h2>
+            <p>Unable to load registration form. The event may no longer be available.</p>
+            <a href="/events" class="btn btn-primary">Browse All Events</a>
+        </div>
+    }
+    else if (isRegistered)
+    {
+        <div class="success-message">
+            <span class="bi bi-check-circle success-icon"></span>
+            <h2>Registration Successful!</h2>
+            <p>Thank you for registering for <strong>@eventItem.Name</strong></p>
+            <div class="success-details">
+                <p><span class="bi bi-calendar-event"></span> @eventItem.Date.ToString("MMMM dd, yyyy - h:mm tt")</p>
+                <p><span class="bi bi-geo-alt"></span> @eventItem.Location</p>
+            </div>
+            <p class="confirmation-text">A confirmation email has been sent to <strong>@registration.Email</strong></p>
+            <div class="action-buttons">
+                <a href="/events" class="btn btn-primary">Browse More Events</a>
+                <a href="/events/@Id" class="btn btn-outline-secondary">View Event Details</a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="back-navigation">
+            <a href="/events/@Id" class="back-link">
+                <span class="bi bi-arrow-left"></span> Back to Event Details
+            </a>
+        </div>
+
+        <div class="registration-card">
+            <div class="registration-header">
+                <h1>Event Registration</h1>
+                <p>@eventItem.Name</p>
+            </div>
+
+            <div class="event-summary">
+                <div class="summary-item">
+                    <span class="bi bi-calendar-event"></span>
+                    <span>@eventItem.Date.ToString("MMM dd, yyyy - h:mm tt")</span>
+                </div>
+                <div class="summary-item">
+                    <span class="bi bi-geo-alt"></span>
+                    <span>@eventItem.Location</span>
+                </div>
+                <div class="summary-item">
+                    <span class="bi bi-tag"></span>
+                    @if (eventItem.Price > 0)
+                    {
+                        <span>$@eventItem.Price.ToString("F2")</span>
+                    }
+                    else
+                    {
+                        <span class="free">FREE</span>
+                    }
+                </div>
+            </div>
+
+            <EditForm Model="@registration" OnValidSubmit="@HandleRegistration" class="registration-form">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="validation-summary" />
+
+                <div class="form-section">
+                    <h3>Personal Information</h3>
+
+                    <div class="form-group">
+                        <label for="firstName">First Name <span class="required">*</span></label>
+                        <InputText id="firstName" class="form-control" @bind-Value="registration.FirstName" placeholder="Enter your first name" />
+                        <ValidationMessage For="@(() => registration.FirstName)" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="lastName">Last Name <span class="required">*</span></label>
+                        <InputText id="lastName" class="form-control" @bind-Value="registration.LastName" placeholder="Enter your last name" />
+                        <ValidationMessage For="@(() => registration.LastName)" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email Address <span class="required">*</span></label>
+                        <InputText id="email" type="email" class="form-control" @bind-Value="registration.Email" placeholder="your.email@example.com" />
+                        <ValidationMessage For="@(() => registration.Email)" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">Phone Number <span class="required">*</span></label>
+                        <InputText id="phone" class="form-control" @bind-Value="registration.PhoneNumber" placeholder="(123) 456-7890" />
+                        <ValidationMessage For="@(() => registration.PhoneNumber)" />
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Additional Information</h3>
+
+                    <div class="form-group">
+                        <label for="company">Company/Organization</label>
+                        <InputText id="company" class="form-control" @bind-Value="registration.Company" placeholder="Optional" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="specialRequirements">Special Requirements or Notes</label>
+                        <InputTextArea id="specialRequirements" class="form-control" rows="4" @bind-Value="registration.SpecialRequirements" placeholder="Any dietary restrictions, accessibility needs, etc." />
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-success btn-lg" disabled="@isSubmitting">
+                        @if (isSubmitting)
+                        {
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            <span> Processing...</span>
+                        }
+                        else
+                        {
+                            <span class="bi bi-check-circle"></span>
+                            <span> Complete Registration</span>
+                        }
+                    </button>
+                    <a href="/events/@Id" class="btn btn-outline-secondary btn-lg">Cancel</a>
+                </div>
+            </EditForm>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Event? eventItem;
+    private Registration registration = new();
+    private bool isLoading = true;
+    private bool isSubmitting = false;
+    private bool isRegistered = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEventDetails();
+    }
+
+    private async Task LoadEventDetails()
+    {
+        isLoading = true;
+        eventItem = await EventService.GetEventByIdAsync(Id);
+        if (eventItem != null)
+        {
+            registration.EventId = eventItem.Id;
+        }
+        isLoading = false;
+    }
+
+    private async Task HandleRegistration()
+    {
+        isSubmitting = true;
+
+        // Simulate API call delay
+        await Task.Delay(1500);
+
+        // In a real app, this would send data to a backend API
+        isRegistered = true;
+        isSubmitting = false;
+    }
+
+    public class Registration
+    {
+        public int EventId { get; set; }
+
+        [Required(ErrorMessage = "First name is required")]
+        public string FirstName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Last name is required")]
+        public string LastName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email address")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Phone number is required")]
+        [Phone(ErrorMessage = "Invalid phone number")]
+        public string PhoneNumber { get; set; } = string.Empty;
+
+        public string Company { get; set; } = string.Empty;
+
+        public string SpecialRequirements { get; set; } = string.Empty;
+    }
+}

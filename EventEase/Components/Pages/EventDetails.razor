@@ -1,0 +1,144 @@
+@page "/events/{id:int}"
+@rendermode InteractiveServer
+@using EventEase.Models
+@using EventEase.Services
+@inject EventService EventService
+@inject NavigationManager Navigation
+
+<PageTitle>@(eventItem?.Name ?? "Event Details") - EventEase</PageTitle>
+
+<div class="event-details-container">
+    @if (isLoading)
+    {
+        <div class="loading-container">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p>Loading event details...</p>
+        </div>
+    }
+    else if (eventItem == null)
+    {
+        <div class="not-found">
+            <span class="bi bi-exclamation-triangle"></span>
+            <h2>Event Not Found</h2>
+            <p>The event you're looking for doesn't exist or has been removed.</p>
+            <a href="/events" class="btn btn-primary">Browse All Events</a>
+        </div>
+    }
+    else
+    {
+        <div class="back-navigation">
+            <a href="/events" class="back-link">
+                <span class="bi bi-arrow-left"></span> Back to Events
+            </a>
+        </div>
+
+        <div class="event-details-card">
+            <div class="event-header">
+                <div class="header-content">
+                    <h1>@eventItem.Name</h1>
+                    <span class="category-badge">@eventItem.Category</span>
+                </div>
+            </div>
+
+            <div class="event-details-body">
+                <div class="details-section">
+                    <h3>Event Information</h3>
+
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="bi bi-calendar-event icon"></span>
+                            <div class="info-content">
+                                <label>Date & Time</label>
+                                <p>@eventItem.Date.ToString("dddd, MMMM dd, yyyy")</p>
+                                <p class="time">@eventItem.Date.ToString("h:mm tt")</p>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <span class="bi bi-geo-alt icon"></span>
+                            <div class="info-content">
+                                <label>Location</label>
+                                <p>@eventItem.Location</p>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <span class="bi bi-people icon"></span>
+                            <div class="info-content">
+                                <label>Capacity</label>
+                                <p>@eventItem.Capacity people</p>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <span class="bi bi-tag icon"></span>
+                            <div class="info-content">
+                                <label>Price</label>
+                                @if (eventItem.Price > 0)
+                                {
+                                    <p class="price">$@eventItem.Price.ToString("F2")</p>
+                                }
+                                else
+                                {
+                                    <p class="price free">FREE</p>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="description-section">
+                    <h3>Description</h3>
+                    <p>@eventItem.Description</p>
+                </div>
+
+                <div class="action-section">
+                    <button class="btn btn-success btn-lg" @onclick="NavigateToRegistration">
+                        <span class="bi bi-pencil-square"></span> Register Now
+                    </button>
+                    <button class="btn btn-outline-secondary btn-lg" @onclick="ShareEvent">
+                        <span class="bi bi-share"></span> Share Event
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Event? eventItem;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEventDetails();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadEventDetails();
+    }
+
+    private async Task LoadEventDetails()
+    {
+        isLoading = true;
+        eventItem = await EventService.GetEventByIdAsync(Id);
+        isLoading = false;
+    }
+
+    private void NavigateToRegistration()
+    {
+        Navigation.NavigateTo($"/events/{Id}/register");
+    }
+
+    private void ShareEvent()
+    {
+        // Placeholder for share functionality
+        // In a real app, this would open a share dialog or copy link to clipboard
+    }
+}

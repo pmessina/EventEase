@@ -1,0 +1,104 @@
+.events-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.page-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.page-header .lead {
+    font-size: 1.2rem;
+    color: #666;
+}
+
+.search-section {
+    margin-bottom: 2rem;
+}
+
+.search-box {
+    position: relative;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.search-box input {
+    padding-left: 2.5rem;
+    padding-right: 1rem;
+    height: 48px;
+    border-radius: 24px;
+    border: 2px solid #e0e0e0;
+    font-size: 1rem;
+}
+
+.search-box input:focus {
+    border-color: #512bd4;
+    box-shadow: 0 0 0 0.2rem rgba(81, 43, 212, 0.25);
+}
+
+.search-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+    font-size: 1.2rem;
+}
+
+.loading-container {
+    text-align: center;
+    padding: 4rem 0;
+}
+
+.loading-container p {
+    margin-top: 1rem;
+    color: #666;
+}
+
+.no-events {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #999;
+}
+
+.no-events .bi {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.no-events h3 {
+    color: #666;
+    margin-bottom: 0.5rem;
+}
+
+.events-grid {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.event-count {
+    text-align: center;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid #e0e0e0;
+}
+
+.event-count p {
+    color: #666;
+    font-size: 0.95rem;
+}
+
+@media (min-width: 768px) {
+    .events-grid {
+        grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+    }
+}
